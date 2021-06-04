@@ -1,0 +1,32 @@
+---
+
+- hosts: openstack
+  tasks:
+    - name: Install requirements
+      command: "{{ ansible_python_interpreter }} -m pip install openstacksdk"
+
+    - name: Provision infrastructure
+      include_role:
+        name: jasmin.cluster-infra
+      vars:
+        cluster_groups:
+          - name: web
+            nodenet_resource: Cluster::NodeNet1
+            num_nodes: 1
+            flavor: "{{ nginx_server_flavor }}"
+            inventory_groups: [nginx_servers]
+
+
+- hosts: nginx_servers
+  become: yes
+  tasks:
+    - name: Install Nginx
+      package:
+        name: nginx
+        state: latest
+
+    - name: Ensure Nginx is started
+      service:
+        name: nginx
+        state: started
+        enabled: yes

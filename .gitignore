@@ -1,0 +1,4 @@
+.python-version
+inventory.*
+roles/*
+!roles/requirements.yml
