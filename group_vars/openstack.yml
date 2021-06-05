@@ -1,1 +1,4 @@
+# Use a CentOS 8 image
 cluster_image: CentOS 8.3
+# Which means the deploy user is centos
+cluster_deploy_user: centos
