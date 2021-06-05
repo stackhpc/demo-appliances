@@ -5,14 +5,22 @@
     - name: Install requirements
       command: "{{ ansible_python_interpreter }} -m pip install openstacksdk"
 
+    - name: Look up floating IP
+      include_role:
+        name: jasmin.cluster-infra
+        tasks_from: look_up_floating_ip
+      vars:
+        os_floating_ip_id: "{{ cluster_floating_ip }}"
+
     - name: Provision infrastructure
       include_role:
         name: jasmin.cluster-infra
       vars:
         cluster_groups:
           - name: web
-            nodenet_resource: Cluster::NodeNet1
+            nodenet_resource: Cluster::NodeNet1WithPreallocatedFIP
             num_nodes: 1
+            nodenet_fips: ["{{ os_floating_ip_info }}"]
             flavor: "{{ nginx_server_flavor }}"
             inventory_groups: [nginx_servers]
 
