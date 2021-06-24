@@ -3,7 +3,7 @@
 - hosts: openstack
   tasks:
     - name: Install requirements
-      command: "{{ ansible_python_interpreter }} -m pip install openstacksdk netaddr"
+      command: "{{ ansible_python_interpreter }} -m pip install openstacksdk netaddr ansible<2.10"
 
     - name: Look up floating IP
       include_role:
