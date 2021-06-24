@@ -1,0 +1,43 @@
+---
+
+- hosts: openstack
+  tasks:
+    - name: Install requirements
+      command: "{{ ansible_python_interpreter }} -m pip install openstacksdk netaddr"
+
+    - name: Look up floating IP
+      include_role:
+        name: jasmin.cluster-infra
+        tasks_from: look_up_floating_ip
+      vars:
+        os_floating_ip_id: "{{ cluster_floating_ip }}"
+
+    - name: Provision infrastructure
+      include_role:
+        name: jasmin.cluster-infra
+      vars:
+        cluster_groups:
+          - name: web
+            nodenet_resource: Cluster::NodeNet1WithPreallocatedFIP
+            num_nodes: 1
+            nodenet_fips: ["{{ os_floating_ip_info }}"]
+            flavor: "{{ minio_server_flavor }}"
+            inventory_groups: [minio_servers]
+
+
+- hosts: minio_servers
+  become: yes
+  roles:
+    - easkay.minio
+  vars:
+    minio_kernel_tuning: false
+    minio_setup_firewall: false
+    minio_bind_address: 0.0.0.0
+    minio_bind_port: 5000
+    minio_cluster_members: []
+    minio_volumes: ["/var/lib/minio"]
+    minio_log_file_name: minio.log
+    # minio_region: <optional>
+    # minio_browser: <optional>
+    # minio_domain: <optional>
+    minio_instances: []

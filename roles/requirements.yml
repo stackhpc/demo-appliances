@@ -1,3 +1,5 @@
 - name: jasmin.cluster-infra
   src: https://github.com/stackhpc/jasmin-cluster-infra-ansible
   version: devel
+
+- name: easkay.minio
