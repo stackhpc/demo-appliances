@@ -3,7 +3,7 @@
 - hosts: openstack
   tasks:
     - name: Install requirements
-      command: "{{ ansible_python_interpreter }} -m pip install openstacksdk netaddr ansible<2.10"
+      command: "{{ ansible_python_interpreter }} -m pip install openstacksdk netaddr"
 
     - name: Look up floating IP
       include_role:
@@ -17,7 +17,7 @@
         name: jasmin.cluster-infra
       vars:
         cluster_groups:
-          - name: web
+          - name: server
             nodenet_resource: Cluster::NodeNet1WithPreallocatedFIP
             num_nodes: 1
             nodenet_fips: ["{{ os_floating_ip_info }}"]
@@ -27,8 +27,34 @@
 
 - hosts: minio_servers
   become: yes
-  roles:
-    - easkay.minio
+  tasks:
+    - include_role:
+        name: easkay.minio
+        tasks_from: "variables.yml"
+    - include_role:
+        name: easkay.minio
+        tasks_from: "user.yml"
+    - include_role:
+        name: easkay.minio
+        tasks_from: "directories.yml"
+    - include_role:
+        name: easkay.minio
+        tasks_from: "download.yml"
+    - include_role:
+        name: easkay.minio
+        tasks_from: "syslog.yml"
+    - include_role:
+        name: easkay.minio
+        tasks_from: "logrotate.yml"
+    - include_role:
+        name: easkay.minio
+        tasks_from: "config.yml"
+    - include_role:
+        name: easkay.minio
+        tasks_from: "service.yml"
+    - include_role:
+        name: easkay.minio
+        tasks_from: "restarts.yml"
   vars:
     minio_kernel_tuning: false
     minio_setup_firewall: false
