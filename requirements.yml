@@ -1,0 +1,11 @@
+roles:
+  - name: stackhpc.terraform-infra
+    src: https://github.com/stackhpc/ansible-role-terraform-infra.git
+    version: main
+  - name: minio
+    src: https://github.com/lean-delivery/ansible-role-minio.git
+    version: master
+
+collections:
+  - name: ansible.posix
+  - name: openstack.cloud
