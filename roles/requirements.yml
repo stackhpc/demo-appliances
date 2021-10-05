@@ -1,5 +1,10 @@
-- name: jasmin.cluster-infra
-  src: https://github.com/stackhpc/jasmin-cluster-infra-ansible
-  version: devel
+roles:
+  - name: stackhpc.terraform-infra
+    src: https://github.com/stackhpc/ansible-role-terraform-infra.git
+    version: main
+  - name: minio
+    src: https://github.com/lean-delivery/ansible-role-minio.git
+    version: master
 
-- name: easkay.minio
+collections:
+  - ansible.posix

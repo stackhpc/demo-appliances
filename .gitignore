@@ -2,3 +2,13 @@
 inventory.*
 roles/*
 !roles/requirements.yml
+.ansible
+.bin
+.terraform
+.terraform.lock.hcl
+*.tfstate*
+.python-version
+inventory.*
+__pycache__
+terraform/backend.tf
+inventory

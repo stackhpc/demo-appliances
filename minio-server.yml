@@ -1,69 +1,41 @@
 ---
 
-- hosts: openstack
-  tasks:
-    - name: Install requirements
-      command: "{{ ansible_python_interpreter }} -m pip install openstacksdk netaddr"
-
+# Provision the infrastructure using Terraform
+- name: Provision infrastructure
+  hosts: openstack
+  pre_tasks:
+    # We need to convert the floating IP id to an address for Terraform
     - name: Look up floating IP
       include_role:
-        name: jasmin.cluster-infra
-        tasks_from: look_up_floating_ip
+        name: stackhpc.terraform-infra
+        tasks_from: lookup_floating_ip
       vars:
         os_floating_ip_id: "{{ cluster_floating_ip }}"
-
-    - name: Provision infrastructure
-      include_role:
-        name: jasmin.cluster-infra
+  roles:
+    - role: stackhpc.terraform-infra
       vars:
-        cluster_groups:
-          - name: server
-            nodenet_resource: Cluster::NodeNet1WithPreallocatedFIP
-            num_nodes: 1
-            nodenet_fips: ["{{ os_floating_ip_info }}"]
-            flavor: "{{ minio_server_flavor }}"
-            inventory_groups: [minio_servers]
+        # Variables controlling the Terraform provisioning
+        terraform_project_path: "{{ playbook_dir }}/terraform"
+        terraform_state: "{{ cluster_state | default('present') }}"
+        terraform_variables:
+          cluster_name: "{{ cluster_name }}"
+          cluster_network: "{{ cluster_network }}"
+          cluster_floating_ip: "{{ os_floating_ip_info.floating_ip_address }}"
+          # We need to inject the user's SSH key and the deploy key for the cluster
+          cluster_ssh_public_keys: "{{ [cluster_deploy_ssh_public_key, cluster_user_ssh_public_key] | to_json }}"
+          server_image: "{{ cluster_image }}"
+          server_flavor: "{{ minio_server_flavor }}"
 
-
-- hosts: minio_servers
+- hosts: cluster
   become: yes
-  tasks:
-    - include_role:
-        name: easkay.minio
-        tasks_from: "variables.yml"
-    - include_role:
-        name: easkay.minio
-        tasks_from: "user.yml"
-    - include_role:
-        name: easkay.minio
-        tasks_from: "directories.yml"
-    - include_role:
-        name: easkay.minio
-        tasks_from: "download.yml"
-    - include_role:
-        name: easkay.minio
-        tasks_from: "syslog.yml"
-    - include_role:
-        name: easkay.minio
-        tasks_from: "logrotate.yml"
-    - include_role:
-        name: easkay.minio
-        tasks_from: "config.yml"
-    - include_role:
-        name: easkay.minio
-        tasks_from: "service.yml"
-    - include_role:
-        name: easkay.minio
-        tasks_from: "restarts.yml"
+  pre_tasks:
+    # The Minio role doesn't play nice with SELinux
+    - name: Disable SELinux
+      ansible.posix.selinux:
+        state: disabled
+  roles:
+    - minio
   vars:
-    minio_kernel_tuning: false
-    minio_setup_firewall: false
-    minio_bind_address: 0.0.0.0
-    minio_bind_port: 5000
-    minio_cluster_members: []
-    minio_volumes: ["/var/lib/minio"]
-    minio_log_file_name: minio.log
-    # minio_region: <optional>
-    # minio_browser: <optional>
-    # minio_domain: <optional>
-    minio_instances: []
+    minio_hostname: "{{ ansible_default_ipv4.address }}"
+    minio_home: /var/lib/minio
+    minio_enable_ssl: false
